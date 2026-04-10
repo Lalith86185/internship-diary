@@ -25,9 +25,9 @@ async function generate() {
 
     if (!start || !end || skills.length === 0) return alert("Please fill all fields!");
 
-    btn.innerText = "Generating...";
+    btn.innerText = "Connecting to Gemini...";
     btn.disabled = true;
-    output.innerHTML = '<div style="text-align:center;">AI is drawing your cards...</div>';
+    output.innerHTML = '<div style="text-align:center; padding:20px;">AI is generating your cards...</div>';
 
     try {
         const res = await fetch('/generate', {
@@ -35,15 +35,20 @@ async function generate() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ startDate: start, endDate: end, skills: skills })
         });
+        
         const data = await res.json();
         
         if (data.error) {
-            output.innerHTML = `<div style="color:red; text-align:center;">${data.error}</div>`;
+            output.innerHTML = `
+                <div style="color:red; text-align:center; padding:20px; border: 1.5px solid red; border-radius:15px; background:#fff0f0;">
+                    <strong>${data.error}</strong><br>
+                    <small>Reason: ${data.details}</small>
+                </div>`;
         } else {
             formatOutput(data.result);
         }
     } catch (e) {
-        output.innerHTML = "Server Error. Try again in a moment.";
+        output.innerHTML = "Network Error. Check if Render is still deploying.";
     } finally {
         btn.innerText = "Generate Professional Diary";
         btn.disabled = false;
@@ -52,8 +57,6 @@ async function generate() {
 
 function formatOutput(text) {
     const output = document.getElementById('output');
-    
-    // Split text by "DATE:"
     const days = text.split(/DATE:/i);
 
     output.innerHTML = days.map(day => {
@@ -62,10 +65,9 @@ function formatOutput(text) {
         const lines = day.trim().split('\n');
         const dateStr = lines[0].replace(/\*/g, '').trim();
 
-        let workText = "Details not found.";
-        let learnText = "Details not found.";
+        let workText = "No summary found.";
+        let learnText = "No outcome found.";
 
-        // Robust splitting using the labels WORK: and LEARN:
         const workSplit = day.split(/WORK:/i);
         if (workSplit.length > 1) {
             const learnSplit = workSplit[1].split(/LEARN:/i);
@@ -78,20 +80,12 @@ function formatOutput(text) {
         return `
             <div class="day-container">
                 <div class="date-header">${dateStr}</div>
-                
                 <div class="sketch-card">
-                    <div class="section-content">
-                        <span class="label">work summary:</span><br>
-                        <span class="txt">${workText.replace(/\n/g, '<br>')}</span>
-                    </div>
+                    <div class="section-content"><span class="label">work summary:</span><br><span class="txt">${workText}</span></div>
                     <button class="centered-copy-btn" onclick="copyText(this)">COPY</button>
                 </div>
-
                 <div class="sketch-card">
-                    <div class="section-content">
-                        <span class="label">learning/outcome:</span><br>
-                        <span class="txt">${learnText.replace(/\n/g, '<br>')}</span>
-                    </div>
+                    <div class="section-content"><span class="label">learning/outcome:</span><br><span class="txt">${learnText}</span></div>
                     <button class="centered-copy-btn" onclick="copyText(this)">COPY</button>
                 </div>
             </div>`;
@@ -101,8 +95,8 @@ function formatOutput(text) {
 function copyText(btn) {
     const text = btn.previousElementSibling.querySelector('.txt').innerText;
     navigator.clipboard.writeText(text).then(() => {
-        const originalText = btn.innerText;
+        const oldText = btn.innerText;
         btn.innerText = "COPIED!";
-        setTimeout(() => btn.innerText = originalText, 2000);
+        setTimeout(() => btn.innerText = oldText, 2000);
     });
 }
