@@ -13,35 +13,32 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Verify this matches your frontend folder name on GitHub exactly
+// Verify this matches your GitHub folder name
 const FRONTEND_FOLDER = 'frontened'; 
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
-// Initialize AI with an empty string fallback to prevent crash
 const genAI = new GoogleGenerativeAI(process.env.API_KEY || "");
 
 app.post('/generate', async (req, res) => {
     const { skills, startDate, endDate } = req.body;
 
-    if (!process.env.API_KEY || process.env.API_KEY.length < 10) {
-        return res.status(500).json({ 
-            error: "API_KEY missing", 
-            details: "The API Key is not set in Render Environment Variables." 
-        });
+    if (!process.env.API_KEY) {
+        return res.status(500).json({ error: "API_KEY missing", details: "Check Render Env Variables." });
     }
 
     try {
+        // Use 'gemini-1.5-flash' - this is the current stable ID
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const prompt = `
-            Generate a professional internship diary from ${startDate} to ${endDate}.
+            Generate an internship diary from ${startDate} to ${endDate}.
             STRICT RULES:
-            1. Check every date. If it is a SUNDAY, SKIP IT ENTIRELY.
-            2. For all other days, use this format:
+            1. SKIP ALL SUNDAYS. 
+            2. For every other day, use this format:
                DATE: [YYYY-MM-DD]
-               WORK: [Task summary for ${skills.join(', ')}]
-               LEARN: [Professional outcome]
-            3. No intro or outro text.
+               WORK: [Task for ${skills.join(', ')}]
+               LEARN: [Outcome]
+            3. No intro/outro text.
         `;
 
         const result = await model.generateContent(prompt);
@@ -49,7 +46,7 @@ app.post('/generate', async (req, res) => {
         res.json({ result: text });
 
     } catch (error) {
-        console.error("DETAILED ERROR:", error);
+        console.error("API ERROR:", error);
         res.status(500).json({ 
             error: "Google AI Error", 
             details: error.message 
@@ -62,4 +59,4 @@ app.get('*', (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`🚀 Server flying on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
