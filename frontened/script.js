@@ -10,9 +10,12 @@ function addSkill(skill) {
     document.getElementById('skillInput').value = '';
 }
 
-// Support Enter key for adding skills
+// Support Enter key for adding skills manually
 document.getElementById('skillInput').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') addSkill(e.target.value);
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        addSkill(e.target.value);
+    }
 });
 
 function renderPills() {
@@ -36,7 +39,6 @@ async function generate() {
     const output = document.getElementById('output');
     const btn = document.querySelector('.generate-btn');
 
-    // Validation
     if (!start || !end || skills.length === 0) {
         alert("Please select dates and add at least one skill.");
         return;
@@ -48,7 +50,7 @@ async function generate() {
     output.innerHTML = '<div class="day-card">AI is writing your diary (skipping Sundays)...</div>';
 
     try {
-        // USE RELATIVE PATH '/generate' - This is the secret to making it work on all laptops
+        // Using relative path '/generate' so it works on any laptop
         const response = await fetch('/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -64,33 +66,35 @@ async function generate() {
         if (data.result) {
             formatOutput(data.result);
         } else {
-            output.innerHTML = `<div class="day-card" style="color: red;">Error: ${data.error || "Server issue. Please wait 1 minute and try again."}</div>`;
+            output.innerHTML = `<div class="day-card" style="color: red;">Error: ${data.error || "Server issue. Please wait 1 minute."}</div>`;
         }
     } catch (err) {
-        console.error("Fetch error:", err);
-        output.innerHTML = `<div class="day-card" style="color: red;">Cannot reach server. It might be waking up—please wait 30 seconds and try again!</div>`;
+        output.innerHTML = `<div class="day-card" style="color: red;">Cannot reach server. It might be waking up—try again in 30 seconds!</div>`;
     } finally {
-        // UI Feedback: Stop Loading
         btn.innerText = "Generate Professional Diary";
         btn.disabled = false;
     }
 }
 
-// 3. Format AI Response into Clean Cards
+// 3. NEW: Format AI Response into Clean Cards
 function formatOutput(text) {
     const output = document.getElementById('output');
     
-    // Splits by "Date:" to create separate cards for each day
-    const days = text.split(/(?=Date:)/g);
+    // Split the text whenever it finds a date between double asterisks
+    const sections = text.split(/(?=\*\*\d{4}-\d{2}-\d{2}\*\*)/g);
 
-    output.innerHTML = days.map(day => {
-        if (day.trim().length < 5) return ''; 
+    output.innerHTML = sections.map(section => {
+        // Skip small chunks or the intro sentence
+        if (section.trim().length < 20 || !section.includes('**')) return ''; 
+
+        // Clean up markdown bolding for the UI
+        let cleanText = section.replace(/\*\*/g, '');
 
         return `
-            <div class="day-card">
-                <div class="day-header">Entry Log</div>
+            <div class="day-card" style="animation: fadeIn 0.6s ease-out;">
+                <div class="day-header">Daily Log Entry</div>
                 <div class="content-row">
-                    <div class="text-wrap">${day.replace(/\n/g, '<br>')}</div>
+                    <div class="text-wrap">${cleanText.replace(/\n/g, '<br>')}</div>
                     <button class="copy-small" onclick="copyText(this)">Copy Text</button>
                 </div>
             </div>
@@ -100,7 +104,10 @@ function formatOutput(text) {
 
 // 4. Copy Feature
 function copyText(btn) {
-    const text = btn.previousElementSibling.innerText;
+    const textContainer = btn.previousElementSibling;
+    // We get the text and remove the <br> tags for a clean clipboard paste
+    const text = textContainer.innerHTML.replace(/<br>/g, '\n');
+    
     navigator.clipboard.writeText(text).then(() => {
         const originalText = btn.innerText;
         btn.innerText = "Copied!";
@@ -109,5 +116,7 @@ function copyText(btn) {
             btn.innerText = originalText;
             btn.style.background = "#6c757d";
         }, 2000);
+    }).catch(err => {
+        alert("Oops, couldn't copy. Try selecting the text manually.");
     });
 }
