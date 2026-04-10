@@ -1,5 +1,6 @@
 let skills = [];
 
+// 1. Skill Management
 function addSkill(skill) {
     const cleanSkill = skill.trim();
     if (cleanSkill && !skills.includes(cleanSkill)) {
@@ -25,6 +26,7 @@ function removeSkill(index) {
     renderPills();
 }
 
+// 2. Generate Data
 async function generate() {
     const start = document.getElementById('start').value;
     const end = document.getElementById('end').value;
@@ -36,9 +38,9 @@ async function generate() {
         return;
     }
 
-    btn.innerText = "Generating...";
+    btn.innerText = "Generating Diary...";
     btn.disabled = true;
-    output.innerHTML = '<div style="text-align:center;">Organizing your sketch cards...</div>';
+    output.innerHTML = '<div style="text-align:center; padding:20px;">AI is organizing your entries...</div>';
 
     try {
         const response = await fetch('/generate', {
@@ -51,30 +53,30 @@ async function generate() {
         if (data.result) {
             formatOutput(data.result);
         } else {
-            output.innerHTML = "Error: Check your Render API Key.";
+            output.innerHTML = "Error: Check Render Environment API_KEY.";
         }
     } catch (err) {
-        output.innerHTML = "Server waking up. Refresh in 30 seconds.";
+        output.innerHTML = "Server is busy. Try again in 30 seconds.";
     } finally {
         btn.innerText = "Generate Professional Diary";
         btn.disabled = false;
     }
 }
 
+// 3. Precise Formatting for Full Date Range
 function formatOutput(text) {
     const output = document.getElementById('output');
     
-    // Split text by the date pattern
-    const days = text.split(/(?=\*\*\d{4}-\d{2}-\d{2}\*\*)/g);
+    // Split by Date headers
+    const days = text.split(/(?=\d{4}-\d{2}-\d{2})/g);
 
     output.innerHTML = days.map(day => {
         if (day.trim().length < 20) return '';
 
-        const dateMatch = day.match(/\*\*(.*?)\*\*/);
-        const dateStr = dateMatch ? dateMatch[1] : "Entry";
+        // Extract Date and Remove extra "Date:" word if present
+        let dateLine = day.split('\n')[0].replace(/\*/g, '').replace(/Date:/i, '').trim();
 
-        // --- NEW TOUGH LOGIC ---
-        // We split the string by the names of the labels themselves
+        // Robust Splitting for Work and Learning
         let workText = "No summary found.";
         let learnText = "No outcome found.";
 
@@ -87,13 +89,13 @@ function formatOutput(text) {
             }
         }
 
-        // Remove any leftover AI bolding (**)
-        workText = workText.replace(/\*\*/g, '').replace(/^\*/, '').trim();
-        learnText = learnText.replace(/\*\*/g, '').replace(/^\*/, '').trim();
+        // Clean up markdown artifacts
+        workText = workText.replace(/\*\*/g, '').replace(/^[\s\*]*/, '').trim();
+        learnText = learnText.replace(/\*\*/g, '').replace(/^[\s\*]*/, '').trim();
 
         return `
             <div class="day-container">
-                <div class="date-header">${dateStr}</div>
+                <div class="date-header">${dateLine}</div>
                 
                 <div class="sketch-card">
                     <div class="section-content">
@@ -115,6 +117,7 @@ function formatOutput(text) {
     }).join('');
 }
 
+// 4. Copy Mechanism
 function copySketchText(btn) {
     const card = btn.closest('.sketch-card');
     const textSpan = card.querySelector('.content-text');
