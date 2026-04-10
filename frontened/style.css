@@ -1,90 +1,41 @@
-body { 
-    font-family: 'Segoe UI', sans-serif; 
-    background: #f0f2f5; 
-    padding: 20px; 
-    display: flex; 
-    justify-content: center; 
-}
-
-.container { 
-    width: 100%; 
-    max-width: 500px; 
-    background: #fff; 
-    padding: 25px; 
-    border-radius: 12px; 
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
-}
-
+body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
+.container { width: 100%; max-width: 500px; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+h2 { text-align: center; }
 label { display: block; margin: 15px 0 5px; font-weight: bold; }
-input[type="date"], .generate-btn { 
-    width: 100%; 
-    padding: 12px; 
-    margin-bottom: 10px; 
-    border-radius: 8px; 
-    border: 1px solid #ddd; 
-    box-sizing: border-box; 
-}
+input[type="date"], .generate-btn { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; }
+.generate-btn { background: #00bcd4; color: white; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+.generate-btn:hover { background: #00acc1; }
 
-.generate-btn { 
-    background: #00bcd4; 
-    color: white; 
-    border: none; 
-    font-weight: bold; 
-    cursor: pointer; 
-}
-
-.sketch-box {
-    border: 1.5px solid #333;
-    padding: 10px;
-    min-height: 45px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    border-radius: 8px;
-}
-
+.sketch-box { border: 1.5px solid #333; padding: 10px; min-height: 45px; display: flex; flex-wrap: wrap; gap: 8px; border-radius: 8px; }
 #skillInput { border: none; outline: none; flex: 1; }
+.pill { background: #eef2f3; padding: 5px 12px; border-radius: 20px; font-size: 13px; border: 1px solid #999; display: flex; align-items: center; }
 
-.pill {
-    background: #eef2f3;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 13px;
-    border: 1px solid #999;
-}
-
-.suggestion-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
-.oval {
-    border: 1.5px solid #333;
-    padding: 6px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    font-size: 12px;
-}
-
-/* Drawing-based Output Styles */
-.day-container { margin-top: 30px; }
-.date-header { font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 15px; }
+/* Output Styling based on your Sketch */
+.day-container { margin-top: 35px; border-top: 1px solid #eee; padding-top: 20px; }
+.date-header { font-size: 1.2rem; font-weight: bold; text-align: center; margin-bottom: 15px; color: #222; }
 
 .sketch-card { 
     background: #fff; 
     border: 1.5px solid #444; 
-    border-radius: 25px; 
+    border-radius: 25px; /* Rounded pill shape */
     padding: 18px; 
     margin-bottom: 15px; 
-    box-shadow: 2px 2px 0px #444; 
+    box-shadow: 3px 3px 0px #444; /* Sketchy shadow */
 }
 
-.label { font-weight: bold; text-decoration: underline; }
+.label { font-weight: bold; text-decoration: underline; text-transform: lowercase; }
+.section-content { font-size: 14px; line-height: 1.6; color: #333; }
+
 .centered-copy-btn { 
     display: block; 
     width: 100px; 
-    margin: 10px auto 0; 
+    margin: 12px auto 0; 
     background: #f8f9fa; 
     border: 1px solid #333; 
-    padding: 5px 0; 
+    padding: 6px 0; 
     border-radius: 15px; 
     font-size: 10px; 
-    font-weight: bold;
-    cursor: pointer;
+    font-weight: bold; 
+    cursor: pointer; 
 }
+.centered-copy-btn:hover { background: #333; color: #fff; }
