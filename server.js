@@ -13,6 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Set this to your exact frontend folder name on GitHub
 const FRONTEND_FOLDER = 'frontened'; 
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
@@ -21,6 +22,10 @@ const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 app.post('/generate', async (req, res) => {
     const { skills, startDate, endDate } = req.body;
 
+    if (!process.env.API_KEY) {
+        return res.status(500).json({ error: "API_KEY is missing in Render settings." });
+    }
+
     try {
         const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
@@ -28,13 +33,13 @@ app.post('/generate', async (req, res) => {
             Generate a professional internship diary from ${startDate} to ${endDate}.
             
             STRICT RULES:
-            1. Determine the day of the week for every date. 
-            2. If a date is a SUNDAY, SKIP IT ENTIRELY. Do not mention it.
-            3. For every other day, use this EXACT format:
+            1. For every date, check the day of the week.
+            2. If it is a SUNDAY, SKIP IT ENTIRELY. Do not generate any text for Sundays.
+            3. For all other days, use this EXACT format:
                DATE: [YYYY-MM-DD] ([Day Name])
-               WORK: [Detailed technical tasks regarding ${skills.join(', ')}]
-               LEARN: [Professional takeaway]
-            4. No introductory text, no "here is your diary", and no footer text.
+               WORK: [Describe tasks related to ${skills.join(', ')}]
+               LEARN: [Describe the professional outcome or takeaway]
+            4. No introductory or closing text.
         `;
 
         const result = await model.generateContent(prompt);
@@ -43,7 +48,7 @@ app.post('/generate', async (req, res) => {
 
     } catch (error) {
         console.error("API Error:", error);
-        res.status(500).json({ error: "Failed to generate diary." });
+        res.status(500).json({ error: "Failed to generate. Check your API Key." });
     }
 });
 
