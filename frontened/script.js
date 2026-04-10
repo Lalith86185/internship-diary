@@ -23,11 +23,11 @@ async function generate() {
     const output = document.getElementById('output');
     const btn = document.querySelector('.generate-btn');
 
-    if (!start || !end || skills.length === 0) return alert("Please fill all fields!");
+    if (!start || !end || skills.length === 0) return alert("Fill all fields!");
 
     btn.innerText = "Connecting to Gemini...";
     btn.disabled = true;
-    output.innerHTML = '<div style="text-align:center; padding:20px;">AI is generating your cards...</div>';
+    output.innerHTML = '<div style="text-align:center; padding:20px;">AI is writing entries...</div>';
 
     try {
         const res = await fetch('/generate', {
@@ -40,15 +40,14 @@ async function generate() {
         
         if (data.error) {
             output.innerHTML = `
-                <div style="color:red; text-align:center; padding:20px; border: 1.5px solid red; border-radius:15px; background:#fff0f0;">
-                    <strong>${data.error}</strong><br>
-                    <small>Reason: ${data.details}</small>
+                <div style="color:red; text-align:center; padding:20px; border: 1.5px solid red; border-radius:15px; background:#fffafa;">
+                    <strong>${data.error}</strong><br><small>Reason: ${data.details}</small>
                 </div>`;
         } else {
             formatOutput(data.result);
         }
     } catch (e) {
-        output.innerHTML = "Network Error. Check if Render is still deploying.";
+        output.innerHTML = "Network Error. Check if Render is Live.";
     } finally {
         btn.innerText = "Generate Professional Diary";
         btn.disabled = false;
