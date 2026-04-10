@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Internship Diary Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="container">
+    <h2>Internship Diary Generator</h2>
+
+    <label>Start Date</label>
+    <input type="date" id="start">
+
+    <label>End Date</label>
+    <input type="date" id="end">
+
+    <label>Skills (Type & Enter or Click Suggestions)</label>
+    <div class="sketch-box" id="sketchBox">
+        <div id="pillsContainer"></div>
+        <input type="text" id="skillInput" placeholder="Add skill...">
+    </div>
+
+    <div class="suggestion-row">
+        <div class="oval" onclick="addSkill('HTML')">HTML</div>
+        <div class="oval" onclick="addSkill('CSS')">CSS</div>
+        <div class="oval" onclick="addSkill('JS')">JS</div>
+        <div class="oval" onclick="addSkill('MySQL')">MySQL</div>
+        <div class="oval" onclick="addSkill('React')">React</div>
+        <div class="oval" onclick="addSkill('Python')">Python</div>
+    </div>
+
+    <button class="generate-btn" onclick="generate()">Generate Professional Diary</button>
+
+    <div id="output"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
