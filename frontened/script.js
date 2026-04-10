@@ -1,6 +1,5 @@
 let skills = [];
 
-// 1. Skill Pill Logic
 function addSkill(skill) {
     const cleanSkill = skill.trim();
     if (cleanSkill && !skills.includes(cleanSkill)) {
@@ -26,7 +25,6 @@ function removeSkill(index) {
     renderPills();
 }
 
-// 2. Main Generation Function
 async function generate() {
     const start = document.getElementById('start').value;
     const end = document.getElementById('end').value;
@@ -38,9 +36,9 @@ async function generate() {
         return;
     }
 
-    btn.innerText = "Organizing Sections...";
+    btn.innerText = "Generating...";
     btn.disabled = true;
-    output.innerHTML = '<div class="day-card">AI is generating and highlighting your entries...</div>';
+    output.innerHTML = '<div style="text-align:center;">Organizing your sketch cards...</div>';
 
     try {
         const response = await fetch('/generate', {
@@ -53,84 +51,84 @@ async function generate() {
         if (data.result) {
             formatOutput(data.result);
         } else {
-            output.innerHTML = "Error: Ensure your API key is set in Render.";
+            output.innerHTML = "Error: Check your Render API Key.";
         }
     } catch (err) {
-        output.innerHTML = "Backend is sleeping. Please wait 1 minute and refresh.";
+        output.innerHTML = "Server waking up. Refresh in 30 seconds.";
     } finally {
         btn.innerText = "Generate Professional Diary";
         btn.disabled = false;
     }
 }
 
-// 3. Formatting Logic (Highlights & Separate Buttons)
 function formatOutput(text) {
     const output = document.getElementById('output');
     
-    // Split text by the date pattern **YYYY-MM-DD**
+    // Split text by the date pattern
     const days = text.split(/(?=\*\*\d{4}-\d{2}-\d{2}\*\*)/g);
 
     output.innerHTML = days.map(day => {
         if (day.trim().length < 20) return '';
 
-        // Extract Date String
         const dateMatch = day.match(/\*\*(.*?)\*\*/);
-        const dateStr = dateMatch ? dateMatch[1] : "Entry Log";
+        const dateStr = dateMatch ? dateMatch[1] : "Entry";
 
-        // Extract Work Summary Section
-        // Looks for text between "Work Summary:**" and "Learning/Outcome:**"
-        const workMatch = day.match(/Work Summary:\*\*(.*?)(?=Learning\/Outcome:|$)/s);
-        let workText = workMatch ? workMatch[1].trim() : "No summary generated.";
+        // --- NEW TOUGH LOGIC ---
+        // We split the string by the names of the labels themselves
+        let workText = "No summary found.";
+        let learnText = "No outcome found.";
 
-        // Extract Learning/Outcome Section
-        // Looks for text after "Learning/Outcome:**"
-        const learnMatch = day.match(/Learning\/Outcome:\*\*(.*?)$/s);
-        let learnText = learnMatch ? learnMatch[1].trim() : "No outcome generated.";
+        const workSplit = day.split(/Work Summary:?/i);
+        if (workSplit.length > 1) {
+            const learnSplit = workSplit[1].split(/Learning\/Outcome:?/i);
+            workText = learnSplit[0].trim();
+            if (learnSplit.length > 1) {
+                learnText = learnSplit[1].trim();
+            }
+        }
+
+        // Remove any leftover AI bolding (**)
+        workText = workText.replace(/\*\*/g, '').replace(/^\*/, '').trim();
+        learnText = learnText.replace(/\*\*/g, '').replace(/^\*/, '').trim();
 
         return `
-            <div class="day-card" style="border-top: 5px solid #007bff; margin-bottom: 25px;">
-                <div style="font-size: 1.1rem; font-weight: bold; color: #007bff; margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
-                    📅 ${dateStr}
-                </div>
+            <div class="day-container">
+                <div class="date-header">${dateStr}</div>
                 
-                <div style="margin-bottom: 20px;">
-                    <div style="font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 5px;">🛠 WORK SUMMARY</div>
-                    <div class="text-wrap" style="background: #f0f7ff; padding: 12px; border-radius: 8px; border-left: 5px solid #007bff; color: #333;">
-                        ${workText.replace(/\n/g, '<br>')}
+                <div class="sketch-card">
+                    <div class="section-content">
+                        <span class="label">work summary:</span><br>
+                        <span class="content-text">${workText.replace(/\n/g, '<br>')}</span>
                     </div>
-                    <button class="copy-small" style="width: 100%; margin-top: 8px; background: #007bff;" onclick="copySection(this)">Copy Work Summary</button>
+                    <button class="centered-copy-btn" onclick="copySketchText(this)">COPY</button>
                 </div>
 
-                <div>
-                    <div style="font-size: 0.8rem; font-weight: bold; color: #555; margin-bottom: 5px;">💡 LEARNING & OUTCOME</div>
-                    <div class="text-wrap" style="background: #f2fcf2; padding: 12px; border-radius: 8px; border-left: 5px solid #28a745; color: #333;">
-                        ${learnText.replace(/\n/g, '<br>')}
+                <div class="sketch-card">
+                    <div class="section-content">
+                        <span class="label">learning/outcome:</span><br>
+                        <span class="content-text">${learnText.replace(/\n/g, '<br>')}</span>
                     </div>
-                    <button class="copy-small" style="width: 100%; margin-top: 8px; background: #28a745;" onclick="copySection(this)">Copy Learning/Outcome</button>
+                    <button class="centered-copy-btn" onclick="copySketchText(this)">COPY</button>
                 </div>
             </div>
         `;
     }).join('');
 }
 
-// 4. Enhanced Copy Logic
-function copySection(btn) {
-    const textBlock = btn.previousElementSibling;
-    // Get text but clean up the <br> tags for clean pasting
-    const textToCopy = textBlock.innerText;
+function copySketchText(btn) {
+    const card = btn.closest('.sketch-card');
+    const textSpan = card.querySelector('.content-text');
+    const textToCopy = textSpan.innerText;
     
     navigator.clipboard.writeText(textToCopy).then(() => {
         const originalText = btn.innerText;
-        const originalBg = btn.style.background;
-        
-        btn.innerText = "✅ Successfully Copied!";
-        btn.style.background = "#333";
-        
+        btn.innerText = "COPIED!";
+        btn.style.background = "#28a745";
+        btn.style.color = "#fff";
         setTimeout(() => {
             btn.innerText = originalText;
-            btn.style.background = originalBg;
+            btn.style.background = "#f8f9fa";
+            btn.style.color = "#333";
         }, 2000);
-    }).catch(err => {
-        console.error('Copy failed', err);
     });
 }
