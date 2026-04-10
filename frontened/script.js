@@ -1,108 +1,113 @@
-let selectedSkills = new Set();
+let skills = [];
 
+// 1. Add Skill Logic (Pills)
 function addSkill(skill) {
-    skill = skill.trim();
-    if (skill && !selectedSkills.has(skill)) {
-        selectedSkills.add(skill);
+    const cleanSkill = skill.trim();
+    if (cleanSkill && !skills.includes(cleanSkill)) {
+        skills.push(cleanSkill);
         renderPills();
     }
     document.getElementById('skillInput').value = '';
 }
 
-function removeSkill(skill) {
-    selectedSkills.delete(skill);
-    renderPills();
-}
+// Support Enter key for adding skills
+document.getElementById('skillInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addSkill(e.target.value);
+});
 
 function renderPills() {
     const container = document.getElementById('pillsContainer');
-    container.innerHTML = '';
-    selectedSkills.forEach(skill => {
-        const pill = document.createElement('div');
-        pill.className = 'pill';
-        pill.innerHTML = `${skill} <span onclick="removeSkill('${skill}')">&times;</span>`;
-        container.appendChild(pill);
-    });
+    container.innerHTML = skills.map((skill, index) => `
+        <div class="pill">
+            ${skill} <span onclick="removeSkill(${index})">&times;</span>
+        </div>
+    `).join('');
 }
 
-// Support for typing and pressing Enter
-document.getElementById('skillInput').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-        addSkill(e.target.value);
-    }
-});
+function removeSkill(index) {
+    skills.splice(index, 1);
+    renderPills();
+}
 
+// 2. Generate Diary (The AI Connection)
 async function generate() {
-    const start = document.getElementById("start").value;
-    const end = document.getElementById("end").value;
-    const outputDiv = document.getElementById("output");
+    const start = document.getElementById('start').value;
+    const end = document.getElementById('end').value;
+    const output = document.getElementById('output');
+    const btn = document.querySelector('.generate-btn');
 
-    if (!start || !end || selectedSkills.size === 0) {
-        alert("Please provide dates and skills!");
+    // Validation
+    if (!start || !end || skills.length === 0) {
+        alert("Please select dates and add at least one skill.");
         return;
     }
 
-    outputDiv.innerHTML = "<p>Generating Diary... ⏳</p>";
+    // UI Feedback: Start Loading
+    btn.innerText = "Generating Daily Entries...";
+    btn.disabled = true;
+    output.innerHTML = '<div class="day-card">AI is writing your diary (skipping Sundays)...</div>';
 
     try {
-        const res = await fetch("http://localhost:5000/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+        // USE RELATIVE PATH '/generate' - This is the secret to making it work on all laptops
+        const response = await fetch('/generate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
-                skills: Array.from(selectedSkills), 
                 startDate: start, 
-                endDate: end 
+                endDate: end, 
+                skills: skills 
             })
         });
-        const data = await res.json();
-        renderOutput(data.result);
-    } catch (e) {
-        outputDiv.innerHTML = "<p style='color:red'>Server Error. Ensure backend is running.</p>";
+
+        const data = await response.json();
+
+        if (data.result) {
+            formatOutput(data.result);
+        } else {
+            output.innerHTML = `<div class="day-card" style="color: red;">Error: ${data.error || "Server issue. Please wait 1 minute and try again."}</div>`;
+        }
+    } catch (err) {
+        console.error("Fetch error:", err);
+        output.innerHTML = `<div class="day-card" style="color: red;">Cannot reach server. It might be waking up—please wait 30 seconds and try again!</div>`;
+    } finally {
+        // UI Feedback: Stop Loading
+        btn.innerText = "Generate Professional Diary";
+        btn.disabled = false;
     }
 }
 
-function renderOutput(text) {
-    const outputDiv = document.getElementById("output");
-    outputDiv.innerHTML = "";
-    const blocks = text.split(/\n(?=\d{4}-\d{2}-\d{2})/);
+// 3. Format AI Response into Clean Cards
+function formatOutput(text) {
+    const output = document.getElementById('output');
+    
+    // Splits by "Date:" to create separate cards for each day
+    const days = text.split(/(?=Date:)/g);
 
-    blocks.forEach(block => {
-        const card = document.createElement('div');
-        card.className = "day-card";
-        const lines = block.split('\n');
+    output.innerHTML = days.map(day => {
+        if (day.trim().length < 5) return ''; 
 
-        lines.forEach(line => {
-            const trimmed = line.trim().replace(/\*/g, '');
-            if (!trimmed) return;
-
-            if (trimmed.match(/^\d{4}-\d{2}-\d{2}/)) {
-                card.innerHTML += `<div class="day-header">${trimmed}</div>`;
-            } else if (trimmed.includes(':')) {
-                const parts = trimmed.split(':');
-                const label = parts[0] + ":";
-                const content = parts.slice(1).join(':').trim();
-
-                const row = document.createElement('div');
-                row.className = "content-row";
-                row.innerHTML = `
-                    <div class="text-wrap"><strong>${label}</strong> ${content}</div>
-                    <button class="copy-small" onclick="copyText('${content}', this)">Copy</button>
-                `;
-                card.appendChild(row);
-            }
-        });
-        outputDiv.appendChild(card);
-    });
+        return `
+            <div class="day-card">
+                <div class="day-header">Entry Log</div>
+                <div class="content-row">
+                    <div class="text-wrap">${day.replace(/\n/g, '<br>')}</div>
+                    <button class="copy-small" onclick="copyText(this)">Copy Text</button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
-function copyText(text, btn) {
+// 4. Copy Feature
+function copyText(btn) {
+    const text = btn.previousElementSibling.innerText;
     navigator.clipboard.writeText(text).then(() => {
-        const original = btn.innerText;
+        const originalText = btn.innerText;
         btn.innerText = "Copied!";
         btn.style.background = "#28a745";
         setTimeout(() => {
-            btn.innerText = original;
+            btn.innerText = originalText;
             btn.style.background = "#6c757d";
-        }, 1200);
+        }, 2000);
     });
 }
