@@ -5,10 +5,8 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Setup environment variables
+// 1. Environment and Path Configuration
 dotenv.config();
-
-// Setup directory paths (required for ES Modules on Render)
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -16,46 +14,58 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// --- CONFIGURATION ---
-// IMPORTANT: This must match your folder name on GitHub exactly
+// IMPORTANT: This must match the folder name you uploaded to GitHub exactly.
 const FRONTEND_FOLDER = 'frontened'; 
 
-// Serve all static files (CSS, JS, Images) from your folder
+// 2. Serve Frontend Files
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
-// Initialize Gemini AI
+// 3. Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.API_KEY);
 
-// API Route for generation
+// 4. AI Generation Route (Strict Sunday Exclusion)
 app.post('/generate', async (req, res) => {
     const { skills, startDate, endDate } = req.body;
 
     try {
-        // Using Flash-Lite for higher free-tier limits (1000 requests/day)
+        // Use flash-lite for higher daily request limits
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
 
-        const prompt = `Generate a professional internship diary from ${startDate} to ${endDate}. 
-        Skills used: ${skills.join(', ')}. 
-        Provide a list with Date, Work Summary, and Learning Outcome for each day.`;
+        const prompt = `
+            You are a professional internship diary assistant. 
+            Generate daily work entries from ${startDate} to ${endDate} for an intern focused on: ${skills.join(', ')}.
+
+            STRICT CALENDAR RULES:
+            - Determine the day of the week for every date in this range.
+            - If a date is a SUNDAY, SKIP IT entirely. Do not generate any text for Sundays.
+            - Only provide entries for Monday through Saturday.
+
+            FOR EACH VALID DAY, PROVIDE:
+            - Date: [YYYY-MM-DD] ([Day Name])
+            - Work Summary: [A clear description of professional tasks]
+            - Learning/Outcome: [A professional takeaway or skill improved]
+
+            Verify your output: Ensure NO Sundays are included.
+        `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        
-        res.json({ result: response.text() });
+        const text = response.text();
+
+        res.json({ result: text });
 
     } catch (error) {
-        console.error("API Error:", error);
-        res.status(500).json({ error: "Failed to generate content. Check API Key quota." });
+        console.error("Gemini API Error:", error);
+        res.status(500).json({ error: "Failed to generate diary. Ensure API Key is set in Render." });
     }
 });
 
-// --- THE FIX FOR "Cannot GET /" ---
-// This catch-all route sends your index.html whenever someone visits the site
+// 5. Catch-all Route (Fixes "Cannot GET /" error)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, FRONTEND_FOLDER, 'index.html'));
 });
 
-// Use Render's dynamic port or default to 5000
+// 6. Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
