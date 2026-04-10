@@ -67,35 +67,37 @@ async function generate() {
 function formatOutput(text) {
     const output = document.getElementById('output');
     
-    // Split by Date headers
-    const days = text.split(/(?=\d{4}-\d{2}-\d{2})/g);
+    // 1. Split by "DATE:" to get each day's block
+    const days = text.split(/DATE:/i);
 
     output.innerHTML = days.map(day => {
-        if (day.trim().length < 20) return '';
+        if (day.trim().length < 10) return '';
 
-        // Extract Date and Remove extra "Date:" word if present
-        let dateLine = day.split('\n')[0].replace(/\*/g, '').replace(/Date:/i, '').trim();
+        // 2. Extract the date (first line of the block)
+        const lines = day.trim().split('\n');
+        const dateStr = lines[0].replace(/\*/g, '').trim();
 
-        // Robust Splitting for Work and Learning
+        // 3. Extract Work and Learning using a simpler split
         let workText = "No summary found.";
         let learnText = "No outcome found.";
 
-        const workSplit = day.split(/Work Summary:?/i);
+        const workSplit = day.split(/WORK:/i);
         if (workSplit.length > 1) {
-            const learnSplit = workSplit[1].split(/Learning\/Outcome:?/i);
+            const learnSplit = workSplit[1].split(/LEARN:/i);
             workText = learnSplit[0].trim();
             if (learnSplit.length > 1) {
                 learnText = learnSplit[1].trim();
             }
         }
 
-        // Clean up markdown artifacts
-        workText = workText.replace(/\*\*/g, '').replace(/^[\s\*]*/, '').trim();
-        learnText = learnText.replace(/\*\*/g, '').replace(/^[\s\*]*/, '').trim();
+        // Clean up stars
+        workText = workText.replace(/\*\*/g, '').trim();
+        learnText = learnText.replace(/\*\*/g, '').trim();
 
+        // 4. Return the HTML structure from your sketch
         return `
             <div class="day-container">
-                <div class="date-header">${dateLine}</div>
+                <div class="date-header">${dateStr}</div>
                 
                 <div class="sketch-card">
                     <div class="section-content">
@@ -116,6 +118,8 @@ function formatOutput(text) {
         `;
     }).join('');
 }
+
+// Keep your existing copySketchText function below this
 
 // 4. Copy Mechanism
 function copySketchText(btn) {
