@@ -1,101 +1,108 @@
-let skills = [];
+let selectedSkills = new Set();
 
 function addSkill(skill) {
-    const clean = skill.trim();
-    if (clean && !skills.includes(clean)) {
-        skills.push(clean);
+    skill = skill.trim();
+    if (skill && !selectedSkills.has(skill)) {
+        selectedSkills.add(skill);
         renderPills();
     }
     document.getElementById('skillInput').value = '';
 }
 
-function renderPills() {
-    document.getElementById('pillsContainer').innerHTML = skills.map((s, i) => 
-        `<div class="pill">${s} <span onclick="removeSkill(${i})" style="cursor:pointer;color:red;margin-left:8px;">&times;</span></div>`
-    ).join('');
+function removeSkill(skill) {
+    selectedSkills.delete(skill);
+    renderPills();
 }
 
-function removeSkill(i) { skills.splice(i, 1); renderPills(); }
+function renderPills() {
+    const container = document.getElementById('pillsContainer');
+    container.innerHTML = '';
+    selectedSkills.forEach(skill => {
+        const pill = document.createElement('div');
+        pill.className = 'pill';
+        pill.innerHTML = `${skill} <span onclick="removeSkill('${skill}')">&times;</span>`;
+        container.appendChild(pill);
+    });
+}
+
+// Support for typing and pressing Enter
+document.getElementById('skillInput').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        addSkill(e.target.value);
+    }
+});
 
 async function generate() {
-    const start = document.getElementById('start').value;
-    const end = document.getElementById('end').value;
-    const output = document.getElementById('output');
-    const btn = document.querySelector('.generate-btn');
+    const start = document.getElementById("start").value;
+    const end = document.getElementById("end").value;
+    const outputDiv = document.getElementById("output");
 
-    if (!start || !end || skills.length === 0) return alert("Fill all fields!");
+    if (!start || !end || selectedSkills.size === 0) {
+        alert("Please provide dates and skills!");
+        return;
+    }
 
-    btn.innerText = "Connecting to Gemini...";
-    btn.disabled = true;
-    output.innerHTML = '<div style="text-align:center; padding:20px;">AI is writing entries...</div>';
+    outputDiv.innerHTML = "<p>Generating Diary... ⏳</p>";
 
     try {
-        const res = await fetch('/generate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ startDate: start, endDate: end, skills: skills })
+        const res = await fetch("http://localhost:5000/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                skills: Array.from(selectedSkills), 
+                startDate: start, 
+                endDate: end 
+            })
         });
-        
         const data = await res.json();
-        
-        if (data.error) {
-            output.innerHTML = `
-                <div style="color:red; text-align:center; padding:20px; border: 1.5px solid red; border-radius:15px; background:#fffafa;">
-                    <strong>${data.error}</strong><br><small>Reason: ${data.details}</small>
-                </div>`;
-        } else {
-            formatOutput(data.result);
-        }
+        renderOutput(data.result);
     } catch (e) {
-        output.innerHTML = "Network Error. Check if Render is Live.";
-    } finally {
-        btn.innerText = "Generate Professional Diary";
-        btn.disabled = false;
+        outputDiv.innerHTML = "<p style='color:red'>Server Error. Ensure backend is running.</p>";
     }
 }
 
-function formatOutput(text) {
-    const output = document.getElementById('output');
-    const days = text.split(/DATE:/i);
+function renderOutput(text) {
+    const outputDiv = document.getElementById("output");
+    outputDiv.innerHTML = "";
+    const blocks = text.split(/\n(?=\d{4}-\d{2}-\d{2})/);
 
-    output.innerHTML = days.map(day => {
-        if (day.trim().length < 15) return '';
+    blocks.forEach(block => {
+        const card = document.createElement('div');
+        card.className = "day-card";
+        const lines = block.split('\n');
 
-        const lines = day.trim().split('\n');
-        const dateStr = lines[0].replace(/\*/g, '').trim();
+        lines.forEach(line => {
+            const trimmed = line.trim().replace(/\*/g, '');
+            if (!trimmed) return;
 
-        let workText = "No summary found.";
-        let learnText = "No outcome found.";
+            if (trimmed.match(/^\d{4}-\d{2}-\d{2}/)) {
+                card.innerHTML += `<div class="day-header">${trimmed}</div>`;
+            } else if (trimmed.includes(':')) {
+                const parts = trimmed.split(':');
+                const label = parts[0] + ":";
+                const content = parts.slice(1).join(':').trim();
 
-        const workSplit = day.split(/WORK:/i);
-        if (workSplit.length > 1) {
-            const learnSplit = workSplit[1].split(/LEARN:/i);
-            workText = learnSplit[0].trim().replace(/\*\*/g, '');
-            if (learnSplit.length > 1) {
-                learnText = learnSplit[1].trim().replace(/\*\*/g, '');
+                const row = document.createElement('div');
+                row.className = "content-row";
+                row.innerHTML = `
+                    <div class="text-wrap"><strong>${label}</strong> ${content}</div>
+                    <button class="copy-small" onclick="copyText('${content}', this)">Copy</button>
+                `;
+                card.appendChild(row);
             }
-        }
-
-        return `
-            <div class="day-container">
-                <div class="date-header">${dateStr}</div>
-                <div class="sketch-card">
-                    <div class="section-content"><span class="label">work summary:</span><br><span class="txt">${workText}</span></div>
-                    <button class="centered-copy-btn" onclick="copyText(this)">COPY</button>
-                </div>
-                <div class="sketch-card">
-                    <div class="section-content"><span class="label">learning/outcome:</span><br><span class="txt">${learnText}</span></div>
-                    <button class="centered-copy-btn" onclick="copyText(this)">COPY</button>
-                </div>
-            </div>`;
-    }).join('');
+        });
+        outputDiv.appendChild(card);
+    });
 }
 
-function copyText(btn) {
-    const text = btn.previousElementSibling.querySelector('.txt').innerText;
+function copyText(text, btn) {
     navigator.clipboard.writeText(text).then(() => {
-        const oldText = btn.innerText;
-        btn.innerText = "COPIED!";
-        setTimeout(() => btn.innerText = oldText, 2000);
+        const original = btn.innerText;
+        btn.innerText = "Copied!";
+        btn.style.background = "#28a745";
+        setTimeout(() => {
+            btn.innerText = original;
+            btn.style.background = "#6c757d";
+        }, 1200);
     });
 }
