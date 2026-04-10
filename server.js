@@ -13,7 +13,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Verify this matches your GitHub folder name
+// Verify this matches your GitHub folder name exactly
 const FRONTEND_FOLDER = 'frontened'; 
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
@@ -23,26 +23,31 @@ app.post('/generate', async (req, res) => {
     const { skills, startDate, endDate } = req.body;
 
     if (!process.env.API_KEY) {
-        return res.status(500).json({ error: "API_KEY missing", details: "Check Render Env Variables." });
+        return res.status(500).json({ 
+            error: "API_KEY missing", 
+            details: "Please add API_KEY to Render Environment Variables." 
+        });
     }
 
     try {
-        // Use 'gemini-1.5-flash' - this is the current stable ID
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        // Changed to 'gemini-1.5-flash-latest' to avoid the 404 error
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
         const prompt = `
             Generate an internship diary from ${startDate} to ${endDate}.
-            STRICT RULES:
-            1. SKIP ALL SUNDAYS. 
-            2. For every other day, use this format:
+            RULES:
+            1. SKIP ALL SUNDAYS.
+            2. For every other day, use this format EXACTLY:
                DATE: [YYYY-MM-DD]
-               WORK: [Task for ${skills.join(', ')}]
+               WORK: [Task summary for ${skills.join(', ')}]
                LEARN: [Outcome]
-            3. No intro/outro text.
+            3. NO INTRO OR OUTRO TEXT.
         `;
 
         const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const response = await result.response;
+        const text = response.text();
+
         res.json({ result: text });
 
     } catch (error) {
