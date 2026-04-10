@@ -1,70 +1,133 @@
-body { font-family: sans-serif; background: #f0f2f5; padding: 20px; display: flex; justify-content: center; }
-.container { width: 100%; max-width: 500px; background: #fff; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+/* General Layout */
+body { 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+    background: #f0f2f5; 
+    padding: 20px; 
+    display: flex; 
+    justify-content: center; 
+}
 
-label { display: block; margin: 15px 0 5px; font-weight: bold; }
-input[type="date"], .generate-btn { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-.generate-btn { background: #00bcd4; color: white; border: none; font-weight: bold; cursor: pointer; font-size: 16px; margin-top: 10px; }
+.container { 
+    width: 100%; 
+    max-width: 500px; 
+    background: #fff; 
+    padding: 25px; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+}
 
-/* The Sketch Box Style */
+h2 { text-align: center; color: #333; margin-bottom: 20px; }
+
+/* Input Styling */
+label { display: block; margin: 15px 0 5px; font-weight: bold; color: #555; }
+input[type="date"], .generate-btn { 
+    width: 100%; 
+    padding: 12px; 
+    margin-bottom: 10px; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+    box-sizing: border-box; 
+}
+
+.generate-btn { 
+    background: #00bcd4; 
+    color: white; 
+    border: none; 
+    font-weight: bold; 
+    cursor: pointer; 
+    font-size: 16px; 
+    margin-top: 10px; 
+    transition: 0.3s;
+}
+.generate-btn:hover { background: #00acc1; }
+.generate-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+/* Skill Box (Sketch Style) */
 .sketch-box {
-    border: 1px solid #333;
+    border: 1.5px solid #333;
     padding: 10px;
     min-height: 45px;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    border-radius: 4px;
+    border-radius: 8px;
     align-items: center;
+    background: #fff;
 }
-#skillInput { border: none; outline: none; flex: 1; min-width: 80px; }
+#skillInput { border: none; outline: none; flex: 1; min-width: 80px; font-size: 14px; }
 
-/* Pills inside the box */
+/* Skill Pills */
 .pill {
-    background: #e0e0e0;
-    padding: 4px 10px;
-    border-radius: 4px;
+    background: #eef2f3;
+    padding: 5px 12px;
+    border-radius: 20px;
     font-size: 13px;
     display: flex;
     align-items: center;
     gap: 8px;
     border: 1px solid #999;
 }
-.pill span { cursor: pointer; font-weight: bold; color: red; }
+.pill span { cursor: pointer; font-weight: bold; color: #ff5252; }
 
-/* Oval Suggestions Style */
+/* Suggestion Ovals */
 .suggestion-row { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
 .oval {
     border: 1.5px solid #333;
-    padding: 8px 18px;
+    padding: 6px 15px;
     border-radius: 20px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 500;
     transition: 0.2s;
 }
-.oval:hover { background: #eee; }
+.oval:hover { background: #333; color: #fff; }
 
-/* Output Alignment Fix */
-.day-card { border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-top: 20px; background: #fff; }
-.day-header { font-weight: bold; color: #00bcd4; border-bottom: 1px solid #eee; padding-bottom: 5px; margin-bottom: 10px; }
-.content-row { 
-    display: flex; 
-    justify-content: space-between; 
-    align-items: flex-start; 
-    background: #f9f9f9; 
-    padding: 10px; 
-    margin: 8px 0; 
-    border-left: 4px solid #00bcd4; 
-    gap: 15px;
+/* --- Output Design (Based on your Drawing) --- */
+
+.day-container { 
+    margin-top: 30px; 
+    padding-top: 10px;
 }
-.text-wrap { flex: 1; font-size: 13px; line-height: 1.5; }
-.copy-small { 
-    flex-shrink: 0; 
-    width: 65px; 
-    background: #6c757d; 
-    color: white; 
-    border: none; 
+
+.date-header { 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    color: #222; 
+    text-align: center; 
+    margin-bottom: 15px;
+    letter-spacing: 1px;
+}
+
+.sketch-card { 
+    background: #ffffff; 
+    border: 1.5px solid #444; 
+    border-radius: 25px; /* Rounded pill shape from drawing */
+    padding: 18px; 
+    margin-bottom: 15px; 
+    box-shadow: 2px 2px 0px #444; /* Slight hand-drawn shadow effect */
+}
+
+.section-content { 
+    font-size: 14px; 
+    line-height: 1.6; 
+    color: #333; 
+    margin-bottom: 10px;
+}
+
+.label { font-weight: bold; color: #000; text-decoration: underline; }
+
+.centered-copy-btn { 
+    display: block; 
+    width: 100px; 
+    margin: 0 auto; 
+    background: #f8f9fa; 
+    color: #333; 
+    border: 1px solid #333; 
     padding: 5px 0; 
-    border-radius: 4px; 
+    border-radius: 15px; 
     font-size: 10px; 
+    font-weight: bold;
     cursor: pointer;
+    transition: 0.2s;
 }
+.centered-copy-btn:hover { background: #333; color: #fff; }
