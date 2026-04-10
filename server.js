@@ -14,7 +14,7 @@ app.use(cors());
 app.use(express.json());
 
 // Verify this matches your GitHub folder name exactly
-const FRONTEND_FOLDER = 'frontened'; 
+const FRONTEND_FOLDER = 'frontend'; 
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
 const genAI = new GoogleGenerativeAI(process.env.API_KEY || "");
