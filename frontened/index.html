@@ -2,40 +2,53 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Internship Diary Generator</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-    <h2>Internship Diary Generator</h2>
+    <div class="container">
+        <header>
+            <h1>Internship Diary Generator</h1>
+            <p>Generate professional work summaries in seconds.</p>
+        </header>
 
-    <label>Start Date</label>
-    <input type="date" id="start">
+        <div class="input-section">
+            <div class="field">
+                <label for="start">Start Date:</label>
+                <input type="date" id="start">
+            </div>
 
-    <label>End Date</label>
-    <input type="date" id="end">
+            <div class="field">
+                <label for="end">End Date:</label>
+                <input type="date" id="end">
+            </div>
 
-    <label>Skills (Type & Enter or Click Suggestions)</label>
-    <div class="sketch-box" id="sketchBox">
-        <div id="pillsContainer"></div>
-        <input type="text" id="skillInput" placeholder="Add skill...">
+            <div class="field">
+                <label>Select Skills:</label>
+                <div class="skill-suggestions">
+                    <button onclick="addSkill('HTML5')">HTML5</button>
+                    <button onclick="addSkill('CSS3')">CSS3</button>
+                    <button onclick="addSkill('JavaScript')">JavaScript</button>
+                    <button onclick="addSkill('React.js')">React.js</button>
+                    <button onclick="addSkill('Node.js')">Node.js</button>
+                </div>
+                <div id="pillsContainer" class="pills-container"></div>
+            </div>
+
+            <button class="generate-btn" onclick="generate()">
+                Generate Professional Diary
+            </button>
+        </div>
+
+        <hr>
+
+        <div id="output" class="output-area">
+            <p style="text-align: center; color: #888;">Your generated diary will appear here...</p>
+        </div>
     </div>
 
-    <div class="suggestion-row">
-        <div class="oval" onclick="addSkill('HTML')">HTML</div>
-        <div class="oval" onclick="addSkill('CSS')">CSS</div>
-        <div class="oval" onclick="addSkill('JS')">JS</div>
-        <div class="oval" onclick="addSkill('MySQL')">MySQL</div>
-        <div class="oval" onclick="addSkill('React')">React</div>
-        <div class="oval" onclick="addSkill('Python')">Python</div>
-    </div>
-
-    <button class="generate-btn" onclick="generate()">Generate Professional Diary</button>
-
-    <div id="output"></div>
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
