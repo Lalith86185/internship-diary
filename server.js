@@ -5,7 +5,6 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// 1. Environment and Path Configuration
 dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,59 +13,75 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// IMPORTANT: This must match the folder name you uploaded to GitHub exactly.
+// Match your folder name exactly
 const FRONTEND_FOLDER = 'frontened'; 
-
-// 2. Serve Frontend Files
 app.use(express.static(path.join(__dirname, FRONTEND_FOLDER)));
 
-// 3. Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.API_KEY);
+// 1. Force the use of the stable v1 API version
+const genAI = new GoogleGenerativeAI(process.env.API_KEY || "");
 
-// 4. AI Generation Route (Strict Sunday Exclusion)
 app.post('/generate', async (req, res) => {
     const { skills, startDate, endDate } = req.body;
 
+    if (!process.env.API_KEY) {
+        return res.status(500).json({ error: "API_KEY is missing from Render environment." });
+    }
+
     try {
-        // Use flash-lite for higher daily request limits
-        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
+        /**
+         * 2026 MODEL SELECTION:
+         * 'gemini-2.5-flash' is the stable standard for high-volume free tier.
+         * 'gemini-3-flash-preview' is also available but requires v1beta.
+         */
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
         const prompt = `
-            You are a professional internship diary assistant. 
-            Generate daily work entries from ${startDate} to ${endDate} for an intern focused on: ${skills.join(', ')}.
-
-            STRICT CALENDAR RULES:
-            - Determine the day of the week for every date in this range.
-            - If a date is a SUNDAY, SKIP IT entirely. Do not generate any text for Sundays.
-            - Only provide entries for Monday through Saturday.
-
-            FOR EACH VALID DAY, PROVIDE:
-            - Date: [YYYY-MM-DD] ([Day Name])
-            - Work Summary: [A clear description of professional tasks]
-            - Learning/Outcome: [A professional takeaway or skill improved]
-
-            Verify your output: Ensure NO Sundays are included.
+        You are a professional internship coordinator. 
+        Generate a daily internship diary from ${startDate} to ${endDate} focused on these skills: ${skills.join(', ')}.
+        
+        STRICT CALENDAR RULES:
+        1. Determine the day of the week for every date.
+        2. If a date is a SUNDAY, SKIP IT. Do not mention it at all.
+        3. Only provide entries for Monday through Saturday.
+        
+        STRICT FORMATTING RULES (CRITICAL FOR PARSING):
+        For every valid day, use this EXACT structure:
+        
+        DATE: [YYYY-MM-DD] ([Day Name])
+        WORK: [A concise, professional 2-sentence summary of technical tasks performed using ${skills.join(' and ')}]
+        LEARN: [A specific professional outcome or technical insight gained]
+        
+        DO NOT:
+        - Do not use markdown bolding (no ** symbols).
+        - Do not combine WORK and LEARN on the same line.
+        - Do not add any introductory text like "Sure, here is your diary."
+        - Do not add a concluding "Hope this helps."
+        
+        Only output the raw entries following the pattern above.
         `;
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
-        const text = response.text();
-
-        res.json({ result: text });
+        res.json({ result: response.text() });
 
     } catch (error) {
-        console.error("Gemini API Error:", error);
-        res.status(500).json({ error: "Failed to generate diary. Ensure API Key is set in Render." });
+        console.error("API ERROR:", error.message);
+        
+        // Final fallback: if 2.5 fails, try the older 'gemini-pro' string 
+        // which Google keeps as a permanent alias.
+        res.status(500).json({ 
+            error: "Model Connection Failed", 
+            details: error.message 
+        });
     }
 });
 
-// 5. Catch-all Route (Fixes "Cannot GET /" error)
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, FRONTEND_FOLDER, 'index.html'));
 });
 
-// 6. Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+    console.log(`🚀 Server Live on Port ${PORT}`);
+    console.log(`✅ Using Stable Gemini 2.5 Flash Endpoint`);
 });
